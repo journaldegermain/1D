@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Jeu 1D</title>
+
+<style>
+body{
+  margin:0;
+  background:#111;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  overflow:hidden;
+}
+
+canvas{
+  background:#1a1a1a;
+  border:2px solid #333;
+}
+</style>
+</head>
+<body>
+
+<canvas id="game" width="900" height="300"></canvas>
+
+<script>
+const canvas = document.getElementById("game")
+const ctx = canvas.getContext("2d")
+
+const ground = 220
+
+const player = {
+  x:120,
+  y:ground,
+  size:30,
+  vy:0,
+  jumping:false
+}
+
+const gravity = 0.8
+const jumpForce = -13
+let speed = 6
+
+let obstacles = []
+
+function spawnObstacle(){
+  obstacles.push({
+    x: canvas.width,
+    y: ground + 10,
+    w: 25,
+    h: 40
+  })
+}
+
+setInterval(spawnObstacle, 1400)
+
+document.addEventListener("keydown", e=>{
+  if(e.code === "Space" && !player.jumping){
+    player.vy = jumpForce
+    player.jumping = true
+  }
+})
+
+function collide(a,b){
+  return a.x < b.x+b.w &&
+         a.x+a.size > b.x &&
+         a.y < b.y+b.h &&
+         a.y+a.size > b.y
+}
+
+let gameOver = false
+
+function update(){
+
+  if(gameOver) return
+
+  player.vy += gravity
+  player.y += player.vy
+
+  if(player.y >= ground){
+    player.y = ground
+    player.vy = 0
+    player.jumping = false
+  }
+
+  obstacles.forEach(o => o.x -= speed)
+
+  obstacles = obstacles.filter(o => o.x > -50)
+
+  for(let o of obstacles){
+    if(collide(player,o)){
+      gameOver = true
+    }
+  }
+}
+
+function draw(){
+
+  ctx.clearRect(0,0,canvas.width,canvas.height)
+
+  ctx.fillStyle="#333"
+  ctx.fillRect(0, ground+player.size, canvas.width, 5)
+
+  ctx.fillStyle = player.jumping ? "#8b0000" : "red"
+  ctx.fillRect(player.x, player.y, player.size, player.size)
+
+  ctx.fillStyle="white"
+  obstacles.forEach(o=>{
+    ctx.fillRect(o.x, o.y, o.w, o.h)
+  })
+
+  if(gameOver){
+    ctx.fillStyle="white"
+    ctx.font="40px Arial"
+    ctx.fillText("GAME OVER", 330, 140)
+  }
+}
+
+function loop(){
+  update()
+  draw()
+  requestAnimationFrame(loop)
+}
+
+loop()
+</script>
+
+</body>
+</html>
